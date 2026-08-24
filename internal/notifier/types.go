@@ -47,12 +47,15 @@ func (r *Registry) Record(ctx context.Context, release domain.Release) error {
 		r.lastError = ErrDispatchBusy
 		return r.lastError
 	}
-	r.activeCampaign = release.CampaignID
 	r.signals[release.CampaignID] = ReleaseSignal{
 		CampaignID: release.CampaignID,
 		ReleaseID:  release.ID,
 		Reviewer:   release.ReleasedBy,
 		RecordedAt: release.ReleasedAt,
 	}
+	// Dispatch complete: clear the busy flag so subsequent campaigns can
+	// publish independently. The recorded signal stays in the map.
+	r.activeCampaign = ""
+	r.lastError = nil
 	return nil
 }

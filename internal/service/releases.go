@@ -31,15 +31,26 @@ func (c *Coordinator) ReleaseCampaign(ctx context.Context, campaignID string, in
 	if err := c.signals.Begin(ctx, release); err != nil {
 		return domain.Release{}, err
 	}
+	// Ensure the dispatch busy flag is released if recording or persistence
+	// fails, so a failed release does not block other campaigns.
+	var recordingErr error
+	defer func() {
+		if recordingErr != nil {
+			_ = c.signals.Reset(ctx)
+		}
+	}()
 	if err := c.repo.SaveRelease(release); err != nil {
+		recordingErr = err
 		return domain.Release{}, err
 	}
 	if err := c.signals.Record(ctx, release); err != nil {
+		recordingErr = err
 		return domain.Release{}, err
 	}
 	campaign.Status = domain.CampaignReleased
 	campaign.ReleasedAt = &release.ReleasedAt
 	if err := c.repo.UpdateCampaign(campaign); err != nil {
+		recordingErr = err
 		return domain.Release{}, err
 	}
 	return release, nil
