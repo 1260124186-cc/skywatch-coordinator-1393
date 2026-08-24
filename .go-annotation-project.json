@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "name": "Skywatch Coordinator",
+  "summary": "A backend for coordinating field astronomy observation campaigns without external services.",
+  "user_roles": [
+    "coordinator",
+    "station operator",
+    "reviewer"
+  ],
+  "entities": [
+    "campaign",
+    "station",
+    "shift",
+    "observation",
+    "release"
+  ],
+  "workflows": [
+    {
+      "id": "campaign-setup",
+      "name": "建立观测活动",
+      "actor": "coordinator",
+      "entry": "POST /v1/campaigns",
+      "steps": [
+        "validate campaign window",
+        "create campaign and attach stations"
+      ],
+      "success": "campaign is active and can accept shifts",
+      "failure": "invalid or overlapping station information is rejected",
+      "verification": "GET /v1/campaigns/{id}/summary returns active"
+    },
+    {
+      "id": "shift-observation",
+      "name": "执行站点观测时段",
+      "actor": "station operator",
+      "entry": "POST /v1/shifts and POST /v1/observations",
+      "steps": [
+        "open a station shift",
+        "submit a frame inside the shift window"
+      ],
+      "success": "frame is stored as candidate",
+      "failure": "frames outside the time window or closed shift are rejected",
+      "verification": "GET /v1/shifts/{id} exposes status"
+    },
+    {
+      "id": "review-release",
+      "name": "审核并发布观测结果",
+      "actor": "reviewer",
+      "entry": "POST /v1/observations/{id}/review and POST /v1/campaigns/{id}/release",
+      "steps": [
+        "review every candidate frame",
+        "release a complete campaign snapshot"
+      ],
+      "success": "campaign becomes released with accepted frames",
+      "failure": "release is blocked while frames remain candidate or shifts remain open",
+      "verification": "GET /v1/campaigns/{id}/summary exposes released status"
+    }
+  ],
+  "module_plan": [
+    {
+      "package": "internal/domain",
+      "workflow_ids": [
+        "campaign-setup",
+        "shift-observation",
+        "review-release"
+      ]
+    },
+    {
+      "package": "internal/store",
+      "workflow_ids": [
+        "campaign-setup",
+        "shift-observation",
+        "review-release"
+      ]
+    },
+    {
+      "package": "internal/service",
+      "workflow_ids": [
+        "campaign-setup",
+        "shift-observation",
+        "review-release"
+      ]
+    },
+    {
+      "package": "internal/httpapi",
+      "workflow_ids": [
+        "campaign-setup",
+        "shift-observation",
+        "review-release"
+      ]
+    }
+  ],
+  "interfaces": [
+    {
+      "name": "campaign API",
+      "workflow_ids": [
+        "campaign-setup"
+      ]
+    },
+    {
+      "name": "shift API",
+      "workflow_ids": [
+        "shift-observation"
+      ]
+    },
+    {
+      "name": "review API",
+      "workflow_ids": [
+        "review-release"
+      ]
+    }
+  ]
+}
