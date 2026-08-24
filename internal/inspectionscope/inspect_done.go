@@ -8,8 +8,6 @@ func (s *Scope) InspectDone(ctx context.Context, campaignID string) error {
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if s.campaignID != campaignID {
-		return ErrBusy
-	}
+	s.release(campaignID)
 	return nil
 }
