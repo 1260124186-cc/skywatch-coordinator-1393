@@ -9,10 +9,6 @@ func (r *Relay) Complete(ctx context.Context, observation domain.Observation) er
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	if r.active != "" && r.active != observation.CampaignID {
-		return ErrBusy
-	}
-	r.active = observation.CampaignID
 	r.delivered[observation.ID] = observation.CampaignID
 	return nil
 }
