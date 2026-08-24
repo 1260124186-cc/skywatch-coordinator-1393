@@ -13,8 +13,8 @@ func (g *Gate) Complete(ctx context.Context, shift domain.Shift) error {
 	if g.active != "" && g.active != shift.CampaignID {
 		return ErrBusy
 	}
-	g.active = shift.CampaignID
 	g.closed[shift.ID] = shift.CampaignID
+	g.active = ""
 	return nil
 }
 
