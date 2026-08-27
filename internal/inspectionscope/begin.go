@@ -8,9 +8,10 @@ func (s *Scope) Begin(ctx context.Context, campaignID string) error {
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if s.campaignID != "" && s.campaignID != campaignID {
+	if s.owner != "" && s.owner != campaignID {
 		return ErrBusy
 	}
-	s.campaignID = campaignID
+	s.owner = campaignID
+	s.depth++
 	return nil
 }
