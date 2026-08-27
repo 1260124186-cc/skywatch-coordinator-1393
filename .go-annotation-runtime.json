@@ -1,0 +1,32 @@
+{
+  "shape": "backend",
+  "service": {
+    "command": "SKYWATCH_ADDR=127.0.0.1:18087 go run ./cmd/skywatch",
+    "startup_timeout_seconds": 20,
+    "health": {
+      "url": "http://127.0.0.1:18087/health",
+      "contains": "ok"
+    },
+    "api": {
+      "url": "http://127.0.0.1:18087/v1/campaigns/cmp-north/summary",
+      "contains": "active"
+    }
+  },
+  "workflow_checks": [
+    {
+      "workflow_id": "campaign-setup",
+      "url": "http://127.0.0.1:18087/v1/campaigns/cmp-north/summary",
+      "contains": "Aurora Sweep"
+    },
+    {
+      "workflow_id": "shift-observation",
+      "url": "http://127.0.0.1:18087/v1/shifts/shift-north",
+      "contains": "open"
+    },
+    {
+      "workflow_id": "review-release",
+      "url": "http://127.0.0.1:18087/v1/observations/obs-north",
+      "contains": "candidate"
+    }
+  ]
+}
